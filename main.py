@@ -1,8 +1,9 @@
+from fakturownia import get_last_12m_invoices
 from functions import return_xls_sheet, return_xls_row, return_customized_xls_header, return_dict_from_lists, \
     return_split_dist, check_tax_numbers, return_invoice_no
 
-xls_file = 'C:\\invoice.xls'
-
+# xls_file = 'C:\\invoice.xls'
+xls_file = 'C:\\Users\\Mateusz\\Desktop\\aaa.xls'
 # open xls file
 sheet = return_xls_sheet(xls_file)
 
@@ -19,11 +20,24 @@ for x in range(sheet.nrows)[1:]:
 
     source_dict = return_split_dist(values_dict)
 
-    print(source_dict)
-    # print(check_tax_numbers(source_dict))
+    if check_tax_numbers(source_dict)['status'] == 'warning':
+        source_dict['NIP'] = check_tax_numbers(source_dict)['new_val']
+
+    # print(source_dict)
     #
-    print(return_invoice_no(source_dict))
+    invoice_number = return_invoice_no(source_dict)
+
+    if invoice_number['status'] == 'success':
+        print(source_dict)
+        tax_id = source_dict['NIP']
+        print(invoice_number['val'])
+
+        # json_output = get_last_12m_invoices(tax_id, xls_file)
+        json_output = {'status': 'success',
+                       'message': 'correctly downloaded invoices',
+                       'val': 'C:\\invoices\\test.json'}
+        print(json_output)
 
 
-    print('\n')
+    # print('\n')
 
