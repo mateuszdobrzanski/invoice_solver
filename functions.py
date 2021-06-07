@@ -112,19 +112,20 @@ def return_invoice_no(dictionary):
     cleanup_sec_title = ''
 
     if 'Tytuł' in dictionary:
-        raw_title = dictionary['Tytuł']
+        # raw_title = dictionary['Tytuł']
         cleanup_title = find_number_by_re(remove_delimiters(dictionary['Tytuł']))
-        print('Tytuł: ' + raw_title + " | " + cleanup_title)
+        # print('Tytuł: ' + raw_title + " | " + cleanup_title)
 
     if 'Numer faktury' in dictionary:
-        raw_sec_title = dictionary['Numer faktury']
+        # raw_sec_title = dictionary['Numer faktury']
         cleanup_sec_title = find_number_by_re(remove_delimiters(dictionary['Numer faktury']))
-        print('Numer faktury: ' + raw_sec_title + " | " + cleanup_sec_title)
+        # print('Numer faktury: ' + raw_sec_title + " | " + cleanup_sec_title)
 
     if cleanup_sec_title != '':
         if 'error' in cleanup_sec_title:
             status = {'status': 'error',
-                      'message': 'error occurred in "Numer faktury"'}
+                      'message': 'error occurred in "Numer faktury"',
+                      'message_detail': cleanup_sec_title}
         else:
             if cleanup_title != '' and not 'error' in cleanup_title:
                 if cleanup_title == cleanup_sec_title:
@@ -143,7 +144,8 @@ def return_invoice_no(dictionary):
                               'val': cleanup_title}
                 else:
                     status = {'status': 'error',
-                              'message': 'both values are different'}
+                              'message': 'both values are different',
+                              'message_detail': cleanup_title + " " + cleanup_sec_title}
             else:
                 status = {'status': 'success',
                           'message': 'returned value from "Numer faktury"',
@@ -151,7 +153,8 @@ def return_invoice_no(dictionary):
     else:
         if 'error' in cleanup_title:
             status = {'status': 'error',
-                      'message': 'error occurred in "Tytuł"'}
+                      'message': 'error occurred in "Tytuł"',
+                      'message_detail': cleanup_title}
         else:
             status = {'status': 'success',
                       'message': 'returned value from "Tytuł"',
