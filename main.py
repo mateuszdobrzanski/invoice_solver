@@ -1,16 +1,18 @@
-# This is a sample Python script.
+from functions import return_xls_sheet, return_xls_row, return_customized_xls_header, return_dict_from_lists, \
+    return_split_dist
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+xls_file = 'C:\\invoice.xls'
+sheet = return_xls_sheet(xls_file)
 
+xls_header = return_customized_xls_header(return_xls_row(sheet, 0))
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+# iterate over the xls lines
+# [1:] skipping header
+for x in range(sheet.nrows)[1:]:
+    row = return_xls_row(sheet, x)
 
+    values_dict = return_dict_from_lists(xls_header, row)
+    # print(str(n_dict))
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    print(str(return_split_dist(values_dict)))
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
