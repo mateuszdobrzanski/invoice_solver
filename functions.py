@@ -1,3 +1,5 @@
+import re
+
 import xlrd
 
 
@@ -41,3 +43,118 @@ def return_split_dist(dictionary):
 
     # combine two dict to one
     return {**new_dict, **transfer_dict}
+
+
+def check_tax_numbers(dictionary):
+    if 'Na rachunek wirtualny' in dictionary:
+        virtual_bill = dictionary['Na rachunek wirtualny']
+        virtual_bill = virtual_bill.replace(" ", "")
+        virtual_bill = virtual_bill[-10:]
+    else:
+        status = {'status': 'error',
+                  'val': False,
+                  'message': 'key not found'}
+        return status
+
+    if dictionary['NIP'] == virtual_bill:
+        status = {'status': 'success',
+                  'val': True,
+                  'message': ''}
+        return status
+    else:
+        status = {'status': 'warning',
+                  'val': False,
+                  'new_val': virtual_bill,
+                  'message': 'tax numbers are different'}
+        return status
+
+
+def remove_delimiters(text):
+    delimiters = [" ", ",", ".", "!", "?", "/", "\\", "&", "-", "_", ":", ";", "@", "'", "..."]
+
+    for d in delimiters:
+        text = text.replace(d, '')
+
+    return text
+
+
+# we are trying to find invoice number or invoice number with prefix
+# also, we are cleaning other chars
+# when we meet multiple numbers in one title, we skip this row
+def find_number_by_re(text):
+    # we set that max and min length value of our number
+    min_length = 17
+    max_length = 28
+    result = None
+
+    for length in range(max_length, min_length, -1):
+        s = '([0-9]{' + str(length) + '})'
+        pattern = re.compile(s)
+        result = pattern.search(text)
+        if result is not None:
+            if len(re.findall(pattern, text)) == 1:
+                p = '(FAB|FSA|FWI|FUS)([0-9]{' + str(length) + '})'
+                pattern = re.compile(p)
+                r = pattern.search(text)
+                if r is not None:
+                    return r.group(0)
+                else:
+                    return result.group(0)
+            else:
+                return 'error - to many cases'
+    if result is None:
+        return 'error - no prefix and number in title'
+
+
+# return cleaned up invoice number
+def return_invoice_no(dictionary):
+    cleanup_title = ''
+    cleanup_sec_title = ''
+
+    if 'Tytuł' in dictionary:
+        raw_title = dictionary['Tytuł']
+        cleanup_title = find_number_by_re(remove_delimiters(dictionary['Tytuł']))
+        print('Tytuł: ' + raw_title + " | " + cleanup_title)
+
+    if 'Numer faktury' in dictionary:
+        raw_sec_title = dictionary['Numer faktury']
+        cleanup_sec_title = find_number_by_re(remove_delimiters(dictionary['Numer faktury']))
+        print('Numer faktury: ' + raw_sec_title + " | " + cleanup_sec_title)
+
+    if cleanup_sec_title != '':
+        if 'error' in cleanup_sec_title:
+            status = {'status': 'error',
+                      'message': 'error occurred in "Numer faktury"'}
+        else:
+            if cleanup_title != '' and not 'error' in cleanup_title:
+                if cleanup_title == cleanup_sec_title:
+                    status = {'status': 'success',
+                              'message': 'both values are same',
+                              'val': cleanup_title}
+
+                elif cleanup_title in cleanup_sec_title:
+                    status = {'status': 'success',
+                              'message': '"Tytuł" is in "Numer faktury" ',
+                              'val': cleanup_sec_title}
+
+                elif cleanup_sec_title in cleanup_title:
+                    status = {'status': 'success',
+                              'message': '"Numer faktury" is in "Tytuł"',
+                              'val': cleanup_title}
+                else:
+                    status = {'status': 'error',
+                              'message': 'both values are different'}
+            else:
+                status = {'status': 'success',
+                          'message': 'returned value from "Numer faktury"',
+                          'val': cleanup_sec_title}
+    else:
+        if 'error' in cleanup_title:
+            status = {'status': 'error',
+                      'message': 'error occurred in "Tytuł"'}
+        else:
+            status = {'status': 'success',
+                      'message': 'returned value from "Tytuł"',
+                      'val': cleanup_title}
+
+    return status
