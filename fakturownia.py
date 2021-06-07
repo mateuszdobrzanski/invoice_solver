@@ -90,3 +90,37 @@ def get_last_12m_invoices(customer_tax_id, file_path):
                   'message': 'an error has occurred when downloaded invoices'}
 
     return status
+
+
+def change_invoice_status_to_paid(invoice_id):
+    invoice_id = str(invoice_id)
+
+    my_url = API_URL + "" + invoice_id + "/change_status.json"
+
+    params = (
+        ('api_token', API_TOKEN),
+        ('status', 'paid'),
+    )
+
+    response = requests.post(my_url, params=params)
+
+    return {'status': 'success',
+            'val': response.status_code,
+            'message': 'zmieniono status na opłacono'}
+
+
+def change_invoice_status_to_partial(invoice_id, price_from_invoice):
+    invoice_id = str(invoice_id)
+
+    my_url = API_URL + "" + invoice_id + ".json"
+
+    params = (
+            ('api_token', API_TOKEN),
+            ('[invoice][paid]', str(price_from_invoice))
+    )
+
+    response = requests.patch(my_url, params=params)
+
+    return {'status': 'success',
+            'val': response.status_code,
+            'message': 'zmieniono status na częściowo opłacono'}

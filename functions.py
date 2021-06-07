@@ -2,6 +2,8 @@ import re
 import json
 import xlrd
 
+from fakturownia import change_invoice_status_to_paid, change_invoice_status_to_partial
+
 
 def return_xls_sheet(xls_file_path):
     workbook = xlrd.open_workbook(xls_file_path)
@@ -196,3 +198,60 @@ def return_invoice(json_file, xls_invoice_number):
                       'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
     return status
 
+
+def compare_amounts(json_data, amount_xls):
+    amount_json = float(json_data['val']['price_gross'])
+
+    if amount_json == float(amount_xls):
+        returned_status = change_invoice_status_to_paid(json_data['val']['id'])
+        status = {'status': 'success',
+                  'val': 'paid',
+                  'message': 'changed to paid',
+                  'message_detail': returned_status}
+    elif amount_json > float(amount_xls):
+        returned_status = change_invoice_status_to_partial(json_data['val']['id'], amount_xls)
+        status = {'status': 'success',
+                  'val': 'partial',
+                  'message': 'changed to partial',
+                  'message_detail': returned_status}
+    elif amount_json < float(amount_xls):
+        # TODO change status to overpaid
+        status = {'status': 'success',
+                  'val': 'partial',
+                  'message': 'changed to overpaid'}
+
+    return status
+
+
+def compare_json_xls(json_data, xls_data):
+    if json_data['val']['status'] == 'issued':
+        status = compare_amounts(json_data, xls_data['Kwota'])
+
+    elif json_data['val']['status'] == 'paid':
+        status = {'status': 'success',
+                  'val': 'paid',
+                  'message': 'status paid'}
+
+    elif json_data['val']['status'] == 'partial':
+        json_paid = float(json_data['val']['paid'])
+        xls_paid = float(xls_data['Kwota'])
+
+        amount = json_paid + xls_paid
+
+        status = compare_amounts(json_data, amount)
+
+    elif json_data['val']['status'] == 'sent':
+        status = {'status': 'warning',
+                  'val': 'sent',
+                  'message': 'status - sent'}
+
+    elif json_data['val']['status'] == 'rejected':
+        status = {'status': 'warning',
+                  'val': 'rejected',
+                  'message': 'status - rejected'}
+
+    else:
+        status = {'status': 'error',
+                  'message': 'error occurred'}
+
+    return status
