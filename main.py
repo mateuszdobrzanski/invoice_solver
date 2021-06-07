@@ -1,6 +1,6 @@
 from fakturownia import get_last_12m_invoices
 from functions import return_xls_sheet, return_xls_row, return_customized_xls_header, return_dict_from_lists, \
-    return_split_dist, check_tax_numbers, return_invoice_no
+    return_split_dist, check_tax_numbers, return_invoice_no, open_json_file, return_invoice
 
 # xls_file = 'C:\\invoice.xls'
 xls_file = 'C:\\Users\\Mateusz\\Desktop\\aaa.xls'
@@ -35,8 +35,10 @@ for x in range(sheet.nrows)[1:]:
         # json_output = get_last_12m_invoices(tax_id, xls_file)
         json_output = {'status': 'success',
                        'message': 'correctly downloaded invoices',
-                       'val': 'C:\\invoices\\test.json'}
-        print(json_output)
+                       'val': 'C:\\test.json'}
+
+        i = return_invoice(json_output['val'], invoice_number['val'])
+        print(i)
 
 
     # print('\n')

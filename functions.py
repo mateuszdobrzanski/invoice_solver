@@ -1,5 +1,5 @@
 import re
-
+import json
 import xlrd
 
 
@@ -161,3 +161,38 @@ def return_invoice_no(dictionary):
                       'val': cleanup_title}
 
     return status
+
+
+def open_json_file(file_name):
+    with open(file_name, encoding='utf-8', errors='ignore') as json_data:
+        f = json.load(json_data)
+
+    return f
+
+
+def return_invoice(json_file, xls_invoice_number):
+    j_file = open_json_file(json_file)
+    status = {'status': 'error',
+              'message': 'invoice number was not found'}
+
+    for j in j_file:
+        cleaned_number = remove_delimiters(j['number'])
+
+        if cleaned_number == xls_invoice_number:
+            status = {'status': 'success',
+                      'message': 'founded properly invoice number',
+                      'val': j,
+                      'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
+            return status
+        elif xls_invoice_number in cleaned_number:
+            status = {'status': 'success',
+                      'message': 'founded number from xls in invoice number',
+                      'val': j,
+                      'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
+            return status
+        else:
+            status = {'status': 'error',
+                      'message': 'invoice number was not found',
+                      'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
+    return status
+
