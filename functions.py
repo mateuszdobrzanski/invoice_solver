@@ -1,12 +1,18 @@
+import os
 import re
 import json
 import xlrd
 
 from fakturownia import change_invoice_status_to_paid, change_invoice_status_to_partial
+from datetime import datetime
 
 
-def return_xls_sheet(xls_file_path):
+def return_xls_workbook(xls_file_path):
     workbook = xlrd.open_workbook(xls_file_path)
+    return workbook
+
+
+def return_xls_sheet(workbook):
     return workbook.sheet_by_index(0)
 
 
@@ -48,6 +54,11 @@ def return_split_dist(dictionary):
 
 
 def check_tax_numbers(dictionary):
+    if 'PAYPRO' in dictionary['Nazwa i adres Kontrahenta']:
+        status = {'status': 'error',
+                  'message': 'PAYPRO payemnt'}
+        return status
+
     if 'Na rachunek wirtualny' in dictionary:
         virtual_bill = dictionary['Na rachunek wirtualny']
         virtual_bill = virtual_bill.replace(" ", "")
@@ -218,7 +229,7 @@ def compare_amounts(json_data, amount_xls):
         # TODO change status to overpaid
         status = {'status': 'success',
                   'val': 'partial',
-                  'message': 'changed to overpaid'}
+                  'message': 'should be changed to overpaid'}
 
     return status
 
@@ -255,3 +266,16 @@ def compare_json_xls(json_data, xls_data):
                   'message': 'error occurred'}
 
     return status
+
+
+def output_filename(file_path, timestamp):
+    head, tail = os.path.split(file_path)
+
+    return head + "\\" + timestamp + "-" + tail
+
+
+def return_date_time():
+    dt_now = datetime.now()
+
+    return dt_now.strftime("%d%m%Y-%H%M%S")
+
