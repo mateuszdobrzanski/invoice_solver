@@ -22,7 +22,9 @@ def return_xls_row(workbook_sheet, row_number):
 
 # source header has not all tax number column, so we need to add a custom description
 def return_customized_xls_header(xls_header):
-    return ['NIP' if header_cell == '' else header_cell for header_cell in xls_header]
+    # return ['NIP' if header_cell == '' else header_cell for header_cell in xls_header]
+    xls_header[3] = 'NIP'
+    return xls_header
 
 
 def return_dict_from_lists(key, value):

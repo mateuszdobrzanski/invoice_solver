@@ -137,7 +137,7 @@ class InvoiceGui(Frame):
                         print(compare_json_xls(invoice, source_dict))
                         self.console_output('\t===Sukces=== Wykonano odczytano/zmieniono status faktury"')
                         self.console_output('\t===Sukces=== ' + compare_json_xls(invoice, source_dict)['message'])
-                        output_ws.write(x, 6, invoice['val']['number'][0:3])
+                        output_ws.write(x, 6, invoice['val']['number'][1:3])
                         output_ws.write(x, 7, invoice['status'])
                         output_ws.write(x, 8, compare_json_xls(invoice, source_dict)['message'])
 
