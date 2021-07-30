@@ -58,7 +58,7 @@ def return_split_dist(dictionary):
 def check_tax_numbers(dictionary):
     if 'PAYPRO' in dictionary['Nazwa i adres Kontrahenta']:
         status = {'status': 'error',
-                  'message': 'PAYPRO payemnt'}
+                  'message': 'płatność PAYPRO'}
         return status
 
     if 'Na rachunek wirtualny' in dictionary:
@@ -68,7 +68,7 @@ def check_tax_numbers(dictionary):
     else:
         status = {'status': 'error',
                   'val': False,
-                  'message': 'key not found'}
+                  'message': 'brak pola "Na rachunek wirtualny"'}
         return status
 
     if dictionary['NIP'] == virtual_bill:
@@ -80,7 +80,7 @@ def check_tax_numbers(dictionary):
         status = {'status': 'warning',
                   'val': False,
                   'new_val': virtual_bill,
-                  'message': 'tax numbers are different'}
+                  'message': 'numery NIP mają różną wartość!'}
         return status
 
 
@@ -116,9 +116,9 @@ def find_number_by_re(text):
                 else:
                     return result.group(0)
             else:
-                return 'error - to many cases'
+                return 'error - znaleziono więcej niż jedną fakturę'
     if result is None:
-        return 'error - no prefix and number in title'
+        return 'error - brak odpowiedniego prefiksu oraz numeru faktry w tytule przelewu'
 
 
 # return cleaned up invoice number
@@ -139,40 +139,40 @@ def return_invoice_no(dictionary):
     if cleanup_sec_title != '':
         if 'error' in cleanup_sec_title:
             status = {'status': 'error',
-                      'message': 'error occurred in "Numer faktury"',
+                      'message': 'napotkano błąd w polu "Numer faktury"',
                       'message_detail': cleanup_sec_title}
         else:
             if cleanup_title != '' and not 'error' in cleanup_title:
                 if cleanup_title == cleanup_sec_title:
                     status = {'status': 'success',
-                              'message': 'both values are same',
+                              'message': 'obie wartości są identyczne',
                               'val': cleanup_title}
 
                 elif cleanup_title in cleanup_sec_title:
                     status = {'status': 'success',
-                              'message': '"Tytuł" is in "Numer faktury" ',
+                              'message': '"Tytuł" zawarty w "Numer faktury" ',
                               'val': cleanup_sec_title}
 
                 elif cleanup_sec_title in cleanup_title:
                     status = {'status': 'success',
-                              'message': '"Numer faktury" is in "Tytuł"',
+                              'message': '"Numer faktury" zawarty w "Tytuł"',
                               'val': cleanup_title}
                 else:
                     status = {'status': 'error',
-                              'message': 'both values are different',
+                              'message': 'obie wartości są różne',
                               'message_detail': cleanup_title + " " + cleanup_sec_title}
             else:
                 status = {'status': 'success',
-                          'message': 'returned value from "Numer faktury"',
+                          'message': 'zwrócono wartości z "Numer faktury"',
                           'val': cleanup_sec_title}
     else:
         if 'error' in cleanup_title:
             status = {'status': 'error',
-                      'message': 'error occurred in "Tytuł"',
+                      'message': 'napotkano błąd w polu "Tytuł"',
                       'message_detail': cleanup_title}
         else:
             status = {'status': 'success',
-                      'message': 'returned value from "Tytuł"',
+                      'message': 'zwrócono wartości z pola "Tytuł"',
                       'val': cleanup_title}
 
     return status
@@ -185,29 +185,52 @@ def open_json_file(file_name):
     return f
 
 
+def return_invoice_by_status(json_file, s_status):
+    j_file = open_json_file(json_file)
+    status = {'status': 'error',
+              'message': 'nie znaleziono stosownych rekordów'}
+
+    invoice_list = []
+
+    for j in j_file:
+        if j['status'] == s_status:
+            print('istnieje faktura o statusie: ' + s_status)
+            invoice_list.append(j)
+
+    if len(invoice_list) == 0:
+        return status
+    elif len(invoice_list) > 0:
+        message_text = 'znaleziono ' + str(len(invoice_list)) + ' faktur'
+
+        status = {'status': 'success',
+                  'message': message_text,
+                  'val': invoice_list}
+        return status
+
+
 def return_invoice(json_file, xls_invoice_number):
     j_file = open_json_file(json_file)
     status = {'status': 'error',
-              'message': 'invoice number was not found'}
+              'message': 'nie znaleziono nr faktury'}
 
     for j in j_file:
         cleaned_number = remove_delimiters(j['number'])
 
         if cleaned_number == xls_invoice_number:
             status = {'status': 'success',
-                      'message': 'founded properly invoice number',
+                      'message': 'zanaleziono poprawny nr faktury',
                       'val': j,
                       'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
             return status
         elif xls_invoice_number in cleaned_number:
             status = {'status': 'success',
-                      'message': 'founded number from xls in invoice number',
+                      'message': 'znaleziono poprawny nr faktury w pliku xls',
                       'val': j,
                       'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
             return status
         else:
             status = {'status': 'error',
-                      'message': 'invoice number was not found',
+                      'message': 'nie znaleziono numeru faktury',
                       'message_detail': j['number'] + " | " + cleaned_number + " | " + xls_invoice_number}
     return status
 
@@ -219,19 +242,19 @@ def compare_amounts(json_data, amount_xls):
         returned_status = change_invoice_status_to_paid(json_data['val']['id'])
         status = {'status': 'success',
                   'val': 'paid',
-                  'message': 'changed to paid',
+                  'message': 'zmieniono status faktury na OPŁACONO',
                   'message_detail': returned_status}
     elif amount_json > float(amount_xls):
         returned_status = change_invoice_status_to_partial(json_data['val']['id'], amount_xls)
         status = {'status': 'success',
                   'val': 'partial',
-                  'message': 'changed to partial',
+                  'message': 'zmieniono status faktury na CZĘŚCOWO OPŁACONO',
                   'message_detail': returned_status}
     elif amount_json < float(amount_xls):
         # TODO change status to overpaid
         status = {'status': 'success',
                   'val': 'partial',
-                  'message': 'should be changed to overpaid'}
+                  'message': 'UWAGA! faktura NADPŁACONA'}
 
     return status
 
@@ -243,7 +266,7 @@ def compare_json_xls(json_data, xls_data):
     elif json_data['val']['status'] == 'paid':
         status = {'status': 'success',
                   'val': 'paid',
-                  'message': 'status paid'}
+                  'message': 'faktura jest obecnie OPŁACONA'}
 
     elif json_data['val']['status'] == 'partial':
         json_paid = float(json_data['val']['paid'])
@@ -256,16 +279,16 @@ def compare_json_xls(json_data, xls_data):
     elif json_data['val']['status'] == 'sent':
         status = {'status': 'warning',
                   'val': 'sent',
-                  'message': 'status - sent'}
+                  'message': 'faktura jest obecnie WYSŁANA'}
 
     elif json_data['val']['status'] == 'rejected':
         status = {'status': 'warning',
                   'val': 'rejected',
-                  'message': 'status - rejected'}
+                  'message': 'faktura jest obecnie ODRZUCONA'}
 
     else:
         status = {'status': 'error',
-                  'message': 'error occurred'}
+                  'message': 'napotkano BŁĄD!'}
 
     return status
 

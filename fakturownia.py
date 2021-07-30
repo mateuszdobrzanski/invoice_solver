@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 import os
 
@@ -18,6 +19,9 @@ API_URL_CLIENTS = config['DEFAULT']['api_url_clients']
 
 HEADERS = {'Accept: application/json',
            'Content-Type: application/json'}
+
+SLEEP_DURATION = float(config['FLOW']['sleep'])
+DIVIDER = int(config['FLOW']['divider'])
 
 
 def is_customer_exist(customer_tax_id):
@@ -124,3 +128,14 @@ def change_invoice_status_to_partial(invoice_id, price_from_invoice):
     return {'status': 'success',
             'val': response.status_code,
             'message': 'zmieniono status na częściowo opłacono'}
+
+
+def check_divider(loop_counter):
+    if loop_counter > 1 and loop_counter % DIVIDER == 0:
+        return True
+    return False
+
+
+def wait_for_connect():
+    time.sleep(SLEEP_DURATION)
+
